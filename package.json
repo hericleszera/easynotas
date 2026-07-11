@@ -24,29 +24,54 @@
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
+      "installerHeaderIcon": "assets/icon.ico",
+      "installerSidebar": "assets/installer-sidebar.png",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "EasyNotas"
     },
     "files": [
       "app/**",
       "assets/**",
-      "node_modules/**"
+      "node_modules/**",
+      "!node_modules/electron/**",
+      "!node_modules/electron-builder/**",
+      "!node_modules/sharp/**",
+      "!node_modules/.cache/**"
+    ],
+    "extraResources": [
+      {
+        "from": "C:/Users/Kaseya/.cache/puppeteer/chrome/win64-150.0.7871.24/chrome-win64",
+        "to": "puppeteer-chrome",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/puppeteer/**",
+      "node_modules/@puppeteer/**"
     ]
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
     "dotenv": "^17.4.2",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.22.0",
+    "puppeteer": "^25.3.0",
     "socket.io": "^4.7.2"
   },
   "devDependencies": {
     "electron": "^28.3.3",
     "electron-builder": "^26.15.3",
-    "puppeteer": "^25.3.0",
     "sharp": "^0.35.3"
   }
 }

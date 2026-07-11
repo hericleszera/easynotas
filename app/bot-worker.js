@@ -360,6 +360,34 @@ async function main() {
   // Importa puppeteer dinamicamente (ESM)
   const { default: puppeteer } = await import('puppeteer');
 
+  // Resolve o caminho do Chrome — funciona em dev e empacotado
+  async function getChromePath() {
+    // 1. Empacotado: Chrome copiado para resources/puppeteer-chrome
+    const { app } = (() => { try { return require('electron'); } catch { return {}; } })();
+    if (app) {
+      const resourcesPath = process.resourcesPath || path.join(__dirname, '..', '..');
+      const packed = path.join(resourcesPath, 'puppeteer-chrome', 'chrome.exe');
+      if (fs.existsSync(packed)) return packed;
+    }
+    // 2. Dev: usa o Chrome baixado pelo Puppeteer
+    try {
+      const p = await puppeteer.executablePath();
+      if (p && fs.existsSync(p)) return p;
+    } catch {}
+    // 3. Fallback: cache padrão do Puppeteer
+    const cacheDir = path.join(os.homedir(), '.cache', 'puppeteer');
+    if (fs.existsSync(cacheDir)) {
+      const entries = fs.readdirSync(path.join(cacheDir, 'chrome')).sort().reverse();
+      for (const entry of entries) {
+        const candidate = path.join(cacheDir, 'chrome', entry, 'chrome-win64', 'chrome.exe');
+        if (fs.existsSync(candidate)) return candidate;
+      }
+    }
+    throw new Error('Chrome não encontrado. Reinstale o aplicativo.');
+  }
+
+  const chromePath = await getChromePath();
+
   // Remove lock file do perfil se existir (Chrome travado)
   const lockFile = path.join(USER_DATA_DIR, 'SingletonLock');
   try { require('fs').unlinkSync(lockFile); } catch {}
@@ -369,7 +397,7 @@ async function main() {
 
   const browser = await puppeteer.launch({
     headless: false,
-    executablePath: await puppeteer.executablePath(),
+    executablePath: chromePath,
     userDataDir: USER_DATA_DIR,
     defaultViewport: null,
     args: [

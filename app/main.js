@@ -8,10 +8,14 @@ const os = require('os');
 
 // ── AUDIT LOG ─────────────────────────────────────────────────────────────────
 const LOGS_DIR = path.join(__dirname, '..', 'logs');
+const _createdDirs = new Set();
 
 function appendAuditLog(id, log) {
   try {
-    if (!fs.existsSync(LOGS_DIR)) fs.mkdirSync(LOGS_DIR, { recursive: true });
+    if (!_createdDirs.has(LOGS_DIR)) {
+      fs.mkdirSync(LOGS_DIR, { recursive: true });
+      _createdDirs.add(LOGS_DIR);
+    }
     const date = new Date(log.timestamp);
     const dateStr = date.toISOString().slice(0, 10); // YYYY-MM-DD
     const timeStr = date.toTimeString().slice(0, 8);  // HH:MM:SS
@@ -157,7 +161,6 @@ function broadcastEstado() {
     status: inst.status,
     empresas: inst.empresas,
     empresaAtual: inst.empresaAtual,
-    logs: inst.logs,
   }));
   broadcast('estado', lista);
 }
@@ -170,6 +173,8 @@ ipcMain.handle('iniciar-instancia', async (event, id) => {
   broadcastEstado();
 
   const env = { ...process.env, ELECTRON_RUN_AS_NODE: '' };
+  const customDir = customDownloadDirs.get(id);
+  if (customDir) env.EASYNOTAS_DOWNLOAD_DIR = customDir;
 
   const worker = spawn(NODE_EXE, [path.join(__dirname, 'bot-worker.js'), String(id)], {
     stdio: ['pipe', 'pipe', 'pipe'],
@@ -203,7 +208,7 @@ ipcMain.handle('iniciar-instancia', async (event, id) => {
         if (!inst) continue;
         if (msg.type === 'log') {
           inst.logs.push(msg.data);
-          if (inst.logs.length > 500) inst.logs = inst.logs.slice(-500);
+          if (inst.logs.length > 550) inst.logs = inst.logs.slice(-550);
           broadcast('log', { id, log: msg.data });
           appendAuditLog(id, msg.data);
         } else if (msg.type === 'status') {
@@ -273,13 +278,33 @@ ipcMain.on('selecionar-empresa', (event, { id, url, filtros }) => {
 ipcMain.handle('get-estado', () => {
   return Array.from(instancias.entries()).map(([id, inst]) => ({
     id, status: inst.status, empresas: inst.empresas,
-    empresaAtual: inst.empresaAtual, logs: inst.logs,
+    empresaAtual: inst.empresaAtual,
   }));
 });
 
 ipcMain.on('abrir-pasta-download', (event, id) => {
-  const dir = path.join(__dirname, '..', 'downloads', 'instancia-' + id);
+  const customDir = customDownloadDirs.get(id);
+  const dir = customDir || path.join(__dirname, '..', 'downloads', 'instancia-' + id);
   shell.openPath(dir);
+});
+
+// Mapa de diretórios customizados por instância
+const customDownloadDirs = new Map();
+
+ipcMain.handle('selecionar-pasta-download', async (event, id) => {
+  const { dialog } = require('electron');
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: `Pasta de destino — Instância ${id}`,
+    properties: ['openDirectory', 'createDirectory'],
+  });
+  if (result.canceled || !result.filePaths.length) return null;
+  const dir = result.filePaths[0];
+  customDownloadDirs.set(id, dir);
+  return dir;
+});
+
+ipcMain.handle('get-pasta-download', (event, id) => {
+  return customDownloadDirs.get(id) || null;
 });
 
 const gotLock = app.requestSingleInstanceLock();

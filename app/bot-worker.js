@@ -41,7 +41,8 @@ const LOGIN_URL = `${BASE_URL}/dte/loginSSL.asp`;
 const INSTANCIA_ID = parseInt(process.argv[2] || '1', 10);
 const DEBUG_PORT = 9220 + INSTANCIA_ID;
 const USER_DATA_DIR = path.join(os.homedir(), 'AppData', 'Local', 'EasyNotas', `perfil-${INSTANCIA_ID}`);
-const DOWNLOAD_DIR = path.join(__dirname, '..', 'downloads', `instancia-${INSTANCIA_ID}`);
+const DOWNLOAD_DIR = process.env.EASYNOTAS_DOWNLOAD_DIR
+  || path.join(__dirname, '..', 'downloads', `instancia-${INSTANCIA_ID}`);
 fs.mkdirSync(DOWNLOAD_DIR, { recursive: true });
 
 function send(type, data) {

@@ -9,12 +9,16 @@ contextBridge.exposeInMainWorld('api', {
   logout:       ()                   => ipcRenderer.invoke('auth-logout'),
 
   // Bot
-  iniciarInstancia:  (id)              => ipcRenderer.invoke('iniciar-instancia', id),
-  pararInstancia:    (id)              => ipcRenderer.invoke('parar-instancia', id),
-  continuarInstancia:(id, filtros)     => ipcRenderer.send('continuar-instancia', { id, filtros }),
-  selecionarEmpresa: (id, url, filtros)=> ipcRenderer.send('selecionar-empresa', { id, url, filtros }),
-  getEstado:         ()                => ipcRenderer.invoke('get-estado'),
-  abrirPastaDownload:(id)              => ipcRenderer.send('abrir-pasta-download', id),
+  iniciarInstancia:  (id)               => ipcRenderer.invoke('iniciar-instancia', id),
+  pararInstancia:    (id)               => ipcRenderer.invoke('parar-instancia', id),
+  continuarInstancia:(id, filtros)      => ipcRenderer.send('continuar-instancia', { id, filtros }),
+  selecionarEmpresa: (id, url, filtros) => ipcRenderer.send('selecionar-empresa', { id, url, filtros }),
+  getEstado:         ()                 => ipcRenderer.invoke('get-estado'),
+  abrirPastaDownload:(id)               => ipcRenderer.send('abrir-pasta-download', id),
+
+  // Pasta customizada
+  selecionarPastaDownload: (id) => ipcRenderer.invoke('selecionar-pasta-download', id),
+  getPastaDownload:        (id) => ipcRenderer.invoke('get-pasta-download', id),
 
   onEstado:         (cb) => ipcRenderer.on('estado',          (_, data) => cb(data)),
   onLog:            (cb) => ipcRenderer.on('log',             (_, data) => cb(data)),

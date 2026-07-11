@@ -303,6 +303,33 @@ app.delete('/api/instancia/:id', (req, res) => {
   res.json({ success: true });
 });
 
+// ── AVISOS / POPUP ────────────────────────────────────────────────────────────
+let avisoAtivo = null; // { titulo, mensagem, tipo }
+
+// GET público — app busca ao iniciar
+app.get('/api/aviso', (req, res) => {
+  res.json(avisoAtivo || {});
+});
+
+// GET admin — painel admin busca
+app.get('/api/admin/aviso', adminAuth, (req, res) => {
+  res.json(avisoAtivo || {});
+});
+
+// POST admin — publica aviso
+app.post('/api/admin/aviso', adminAuth, (req, res) => {
+  const { titulo, mensagem, tipo } = req.body;
+  if (!titulo || !mensagem) return res.status(400).json({ error: 'titulo e mensagem obrigatorios' });
+  avisoAtivo = { titulo, mensagem, tipo: tipo || 'info', criadoEm: new Date().toISOString() };
+  res.json({ success: true });
+});
+
+// DELETE admin — remove aviso
+app.delete('/api/admin/aviso', adminAuth, (req, res) => {
+  avisoAtivo = null;
+  res.json({ success: true });
+});
+
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Dashboard rodando em http://localhost:${PORT}`);

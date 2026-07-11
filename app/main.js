@@ -51,16 +51,18 @@ function createMainWindow() {
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
-    minWidth: 900,
-    minHeight: 600,
+    minWidth: 860,
+    minHeight: 560,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
       preload: path.join(__dirname, 'preload.js')
     },
-    backgroundColor: '#0d0d14',
+    backgroundColor: '#07070f',
     title: 'EasyNotas',
     autoHideMenuBar: true,
+    frame: false,
+    titleBarStyle: 'hidden',
   });
 
   // Abre tela de login primeiro
@@ -148,6 +150,14 @@ ipcMain.handle('auth-logout', async () => {
   try { fs.unlinkSync(sessionFile); } catch {}
   mainWindow.loadFile(path.join(__dirname, 'login.html'));
 });
+
+// ── CONTROLE DA JANELA ────────────────────────────────────────────────────────
+ipcMain.on('win-minimize',  () => mainWindow && mainWindow.minimize());
+ipcMain.on('win-maximize',  () => {
+  if (!mainWindow) return;
+  mainWindow.isMaximized() ? mainWindow.unmaximize() : mainWindow.maximize();
+});
+ipcMain.on('win-close',     () => mainWindow && mainWindow.close());
 
 // ── JANELA ADMIN ──────────────────────────────────────────────────────────────
 let adminWindow = null;

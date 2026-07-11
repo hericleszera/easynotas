@@ -23,6 +23,11 @@ contextBridge.exposeInMainWorld('api', {
   // Admin
   abrirJanelaAdmin: () => ipcRenderer.invoke('abrir-janela-admin'),
 
+  // Controle da janela
+  winMinimize: () => ipcRenderer.send('win-minimize'),
+  winMaximize: () => ipcRenderer.send('win-maximize'),
+  winClose:    () => ipcRenderer.send('win-close'),
+
   onEstado:         (cb) => ipcRenderer.on('estado',          (_, data) => cb(data)),
   onLog:            (cb) => ipcRenderer.on('log',             (_, data) => cb(data)),
   onEmpresaProgress:(cb) => ipcRenderer.on('empresa-progress',(_, data) => cb(data)),

@@ -16,11 +16,39 @@
       --text:#eef2ff;--text2:#7c85a2;--text3:#33394f;
     }
     html,body{height:100%;width:100%;overflow:hidden;}
+    /* TITLEBAR */
+    .titlebar{
+      height:36px;flex-shrink:0;position:fixed;top:0;left:0;right:0;z-index:100;
+      background:rgba(7,7,15,.95);border-bottom:1px solid rgba(255,255,255,.05);
+      display:flex;align-items:center;padding:0 14px;gap:8px;
+      -webkit-app-region:drag;
+    }
+    .titlebar-dots{display:flex;align-items:center;gap:6px;-webkit-app-region:no-drag;}
+    .tb-dot{width:12px;height:12px;border-radius:50%;cursor:pointer;transition:filter .15s,transform .15s;flex-shrink:0;}
+    .tb-dot:hover{filter:brightness(1.3);transform:scale(1.1);}
+    .tb-dot.close{background:#ff5f57;}
+    .tb-dot.min{background:#febc2e;}
+    .tb-dot.max{background:#28c840;}
+    .titlebar-title{flex:1;text-align:center;font-size:11px;font-weight:600;color:rgba(255,255,255,.2);letter-spacing:.3px;pointer-events:none;}
+    .titlebar-right{width:54px;}
+    /* RESPONSIVO */
+    @media(max-width:700px){
+      .login-container{width:100%;height:100%;border-radius:0;flex-direction:column;}
+      .panel-left{width:100%;height:auto;padding:24px 24px 16px;flex-direction:row;justify-content:flex-start;gap:16px;}
+      .panel-left-content{flex-direction:row;align-items:center;gap:16px;}
+      .logo-img-wrap{width:60px;height:60px;margin-bottom:0;}
+      .logo-img{width:60px;height:60px;}
+      .logo-ring,.logo-ring-2,.logo-orb,.divider,.features{display:none;}
+      .logo-name{font-size:18px;}
+      .logo-tagline{display:none;}
+      .panel-right{padding:24px;}
+    }
     body{
       background:var(--bg);color:var(--text);
       font-family:'Inter',system-ui,sans-serif;
       display:flex;align-items:center;justify-content:center;
       user-select:none;position:relative;
+      padding-top:36px;
     }
 
     /* ── CANVAS PARTICLES ── */
@@ -308,6 +336,15 @@
 </head>
 <body>
 
+<div class="titlebar">
+  <div class="titlebar-dots">
+    <div class="tb-dot close" onclick="window.api.winClose()" title="Fechar"></div>
+    <div class="tb-dot min" onclick="window.api.winMinimize()" title="Minimizar"></div>
+    <div class="tb-dot max" onclick="window.api.winMaximize()" title="Maximizar"></div>
+  </div>
+  <div class="titlebar-title">EasyNotas</div>
+  <div class="titlebar-right"></div>
+</div>
 <canvas id="particles-canvas"></canvas>
 <div class="bg-glow">
   <div class="glow-1"></div>

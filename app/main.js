@@ -209,7 +209,16 @@ ipcMain.handle('iniciar-instancia', async (event, id) => {
   const customDir = customDownloadDirs.get(id);
   if (customDir) env.EASYNOTAS_DOWNLOAD_DIR = customDir;
 
-  const worker = spawn(NODE_EXE, [path.join(__dirname, 'bot-worker.js'), String(id)], {
+  // Em produção, aponta node_modules para fora do asar
+  if (app.isPackaged) {
+    env.NODE_PATH = path.join(process.resourcesPath, 'app.asar.unpacked', 'node_modules');
+  }
+
+  const workerPath = app.isPackaged
+    ? path.join(process.resourcesPath, 'app.asar.unpacked', 'app', 'bot-worker.js')
+    : path.join(__dirname, 'bot-worker.js');
+
+  const worker = spawn(NODE_EXE, [workerPath, String(id)], {
     stdio: ['pipe', 'pipe', 'pipe'],
     env,
   });

@@ -125,12 +125,12 @@ ipcMain.handle('auth-verify', async (event, token) => {
   }
 });
 
-ipcMain.handle('auth-ir-dashboard', async (event, { token, username, diasRestantes }) => {
+ipcMain.handle('auth-ir-dashboard', async (event, { token, username, diasRestantes, role }) => {
   // Persiste sessão localmente (arquivo criptografado simples)
   const sessionFile = path.join(os.homedir(), 'AppData', 'Local', 'EasyNotas', 'session.json');
   try {
     fs.mkdirSync(path.dirname(sessionFile), { recursive: true });
-    fs.writeFileSync(sessionFile, JSON.stringify({ token, username, diasRestantes, savedAt: Date.now() }), 'utf8');
+    fs.writeFileSync(sessionFile, JSON.stringify({ token, username, diasRestantes, role, savedAt: Date.now() }), 'utf8');
   } catch {}
   mainWindow.loadFile(path.join(__dirname, 'dashboard.html'));
 });
@@ -147,6 +147,28 @@ ipcMain.handle('auth-logout', async () => {
   const sessionFile = path.join(os.homedir(), 'AppData', 'Local', 'EasyNotas', 'session.json');
   try { fs.unlinkSync(sessionFile); } catch {}
   mainWindow.loadFile(path.join(__dirname, 'login.html'));
+});
+
+// ── JANELA ADMIN ──────────────────────────────────────────────────────────────
+let adminWindow = null;
+ipcMain.handle('abrir-janela-admin', () => {
+  if (adminWindow && !adminWindow.isDestroyed()) {
+    adminWindow.focus();
+    return;
+  }
+  adminWindow = new BrowserWindow({
+    width: 1100,
+    height: 700,
+    minWidth: 800,
+    minHeight: 500,
+    webPreferences: { nodeIntegration: false, contextIsolation: true },
+    backgroundColor: '#07070f',
+    title: 'EasyNotas — Admin',
+    autoHideMenuBar: true,
+    parent: mainWindow,
+  });
+  adminWindow.loadFile(path.join(__dirname, 'admin.html'));
+  adminWindow.on('closed', () => { adminWindow = null; });
 });
 
 function broadcast(channel, data) {

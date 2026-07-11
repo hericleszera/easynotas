@@ -493,7 +493,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
   const res=await window.api.verificarToken(session.token);
   setLoading(false);
   if(res.status===200){
-    await transitionOut({token:session.token,username:res.body.username,diasRestantes:res.body.diasRestantes});
+    await transitionOut({token:session.token,username:res.body.username,diasRestantes:res.body.diasRestantes,role:res.body.role||'user'});
   } else if(res.body&&res.body.error==='licenca_expirada'){
     mostrarLicencaExpirada();
   }
@@ -520,7 +520,7 @@ async function fazerLogin(){
     } else {
       localStorage.removeItem('en_remember_user');
     }
-    await transitionOut({token,username:user,diasRestantes});
+    await transitionOut({token,username:user,diasRestantes,role:res.body.role||'user'});
   } else if(res.body&&res.body.error==='licenca_expirada'){
     mostrarLicencaExpirada();
   } else {

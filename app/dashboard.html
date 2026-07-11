@@ -85,6 +85,15 @@
     .topbar-stat-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-top:1px;}
     /* TOPBAR RIGHT */
     .topbar-sep{flex:1;}
+    .btn-admin{
+      display:none;align-items:center;gap:6px;
+      padding:5px 12px;border-radius:8px;
+      background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);
+      color:#f87171;font-size:11px;font-weight:600;cursor:pointer;
+      transition:all .2s;
+    }
+    .btn-admin:hover{background:rgba(239,68,68,.16);border-color:rgba(239,68,68,.35);}
+    .btn-admin.visible{display:flex;}
     .topbar-meta{display:flex;align-items:center;gap:8px;}
     .topbar-clock{
       display:flex;align-items:center;gap:6px;
@@ -580,6 +589,10 @@
     </div>
   </div>
 
+  <div class="btn-admin" id="btn-admin" onclick="abrirAdmin()">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    Admin
+  </div>
   <div class="topbar-sep"></div>
 
   <!-- RIGHT META -->
@@ -1310,6 +1323,11 @@ async function initPerfil() {
   const session = await window.api.getSession().catch(() => null);
   const nome = (session && session.username) || localStorage.getItem('en_user_name') || 'Usuário';
   const diasLicenca = session ? session.diasRestantes : null;
+  const role = session ? (session.role || 'user') : 'user';
+
+  // Mostra botão admin se for admin
+  const btnAdmin = document.getElementById('btn-admin');
+  if(btnAdmin && role === 'admin') btnAdmin.classList.add('visible');
 
   // Dias de uso local
   let firstOpen = localStorage.getItem('en_first_open');
@@ -1342,6 +1360,10 @@ async function initPerfil() {
   }
 }
 initPerfil();
+
+function abrirAdmin(){
+  window.api.abrirJanelaAdmin();
+}
 
 async function fazerLogout() {
   // Para todas as instâncias antes de sair

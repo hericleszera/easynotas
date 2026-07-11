@@ -32,8 +32,13 @@ async function initDb() {
       username         VARCHAR(100) UNIQUE NOT NULL,
       password_hash    TEXT NOT NULL,
       license_expires  TIMESTAMP NOT NULL,
+      role             VARCHAR(20) DEFAULT 'user' NOT NULL,
       created_at       TIMESTAMP DEFAULT NOW()
     )
+  `);
+  // Adiciona coluna role se já existia a tabela sem ela
+  await pool.query(`
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'user' NOT NULL
   `);
   console.log('Banco de dados inicializado.');
 }
@@ -73,12 +78,12 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, username: user.username, license_expires: user.license_expires },
+      { id: user.id, username: user.username, role: user.role, license_expires: user.license_expires },
       JWT_SECRET,
       { expiresIn: '12h' }
     );
 
-    res.json({ token, username: user.username, diasRestantes });
+    res.json({ token, username: user.username, diasRestantes, role: user.role });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Erro interno do servidor' });
@@ -109,7 +114,7 @@ app.post('/api/auth/verify', async (req, res) => {
       });
     }
 
-    res.json({ valid: true, username: user.username, diasRestantes });
+    res.json({ valid: true, username: user.username, diasRestantes, role: user.role });
   } catch (err) {
     if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
       return res.status(401).json({ error: 'Token inválido ou expirado' });
@@ -123,16 +128,17 @@ app.post('/api/auth/verify', async (req, res) => {
 // POST /api/admin/users — cria novo usuário
 app.post('/api/admin/users', adminAuth, async (req, res) => {
   try {
-    const { username, password, dias } = req.body;
+    const { username, password, dias, role } = req.body;
     if (!username || !password || !dias)
       return res.status(400).json({ error: 'username, password e dias são obrigatórios' });
 
     const hash = await bcrypt.hash(password, 10);
     const expires = new Date(Date.now() + dias * 86400000);
+    const userRole = role === 'admin' ? 'admin' : 'user';
 
     const result = await pool.query(
-      'INSERT INTO users (username, password_hash, license_expires) VALUES ($1, $2, $3) RETURNING id, username, license_expires',
-      [username, hash, expires]
+      'INSERT INTO users (username, password_hash, license_expires, role) VALUES ($1, $2, $3, $4) RETURNING id, username, license_expires, role',
+      [username, hash, expires, userRole]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -146,7 +152,7 @@ app.post('/api/admin/users', adminAuth, async (req, res) => {
 app.get('/api/admin/users', adminAuth, async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT id, username, license_expires, created_at FROM users ORDER BY created_at DESC'
+      'SELECT id, username, license_expires, role, created_at FROM users ORDER BY created_at DESC'
     );
     const users = result.rows.map(u => {
       const diasRestantes = Math.ceil((new Date(u.license_expires) - new Date()) / 86400000);
@@ -159,11 +165,11 @@ app.get('/api/admin/users', adminAuth, async (req, res) => {
   }
 });
 
-// PATCH /api/admin/users/:id — atualiza licença ou senha
+// PATCH /api/admin/users/:id — atualiza licença, senha ou role
 app.patch('/api/admin/users/:id', adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
-    const { dias, password } = req.body;
+    const { dias, password, role } = req.body;
 
     if (dias) {
       const expires = new Date(Date.now() + dias * 86400000);
@@ -172,6 +178,10 @@ app.patch('/api/admin/users/:id', adminAuth, async (req, res) => {
     if (password) {
       const hash = await bcrypt.hash(password, 10);
       await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [hash, id]);
+    }
+    if (role) {
+      const validRole = role === 'admin' ? 'admin' : 'user';
+      await pool.query('UPDATE users SET role = $1 WHERE id = $2', [validRole, id]);
     }
 
     res.json({ success: true });

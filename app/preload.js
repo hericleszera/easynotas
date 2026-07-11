@@ -20,6 +20,9 @@ contextBridge.exposeInMainWorld('api', {
   selecionarPastaDownload: (id) => ipcRenderer.invoke('selecionar-pasta-download', id),
   getPastaDownload:        (id) => ipcRenderer.invoke('get-pasta-download', id),
 
+  // Admin
+  abrirJanelaAdmin: () => ipcRenderer.invoke('abrir-janela-admin'),
+
   onEstado:         (cb) => ipcRenderer.on('estado',          (_, data) => cb(data)),
   onLog:            (cb) => ipcRenderer.on('log',             (_, data) => cb(data)),
   onEmpresaProgress:(cb) => ipcRenderer.on('empresa-progress',(_, data) => cb(data)),

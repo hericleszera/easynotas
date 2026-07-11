@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SEFAZ-AM Dashboard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0d1117;
+      color: #e6edf3;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    header .dot {
+      width: 10px; height: 10px;
+      background: #3fb950;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    header h1 { font-size: 16px; font-weight: 600; color: #e6edf3; }
+    header span { font-size: 12px; color: #8b949e; margin-left: auto; }
+
+    #no-instancias {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      color: #8b949e;
+      gap: 8px;
+    }
+
+    #no-instancias svg { opacity: 0.3; }
+    #no-instancias p { font-size: 14px; }
+
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+      gap: 1px;
+      flex: 1;
+      overflow: hidden;
+      background: #30363d;
+    }
+
+    .instancia-card {
+      background: #0d1117;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .instancia-header {
+      background: #161b22;
+      padding: 10px 16px;
+      border-bottom: 1px solid #30363d;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .instancia-id {
+      background: #1f6feb;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 12px;
+    }
+
+    .instancia-nome {
+      font-size: 13px;
+      font-weight: 600;
+      color: #e6edf3;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .status-badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .status-iniciando  { background: #30363d; color: #8b949e; }
+    .status-aguardando { background: #2d3748; color: #f6c90e; }
+    .status-coletando  { background: #1f3a5f; color: #58a6ff; }
+    .status-processando { background: #1a3a2a; color: #3fb950; }
+    .status-concluido  { background: #1a3a2a; color: #3fb950; }
+    .status-erro       { background: #3d1a1a; color: #f85149; }
+
+    .instancia-body {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* Painel de empresas */
+    .painel-empresas {
+      width: 200px;
+      flex-shrink: 0;
+      border-right: 1px solid #30363d;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .painel-empresas-header {
+      padding: 8px 12px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #8b949e;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      border-bottom: 1px solid #30363d;
+      flex-shrink: 0;
+    }
+
+    .empresas-list {
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .empresas-list::-webkit-scrollbar { width: 4px; }
+    .empresas-list::-webkit-scrollbar-track { background: transparent; }
+    .empresas-list::-webkit-scrollbar-thumb { background: #30363d; border-radius: 2px; }
+
+    .empresa-item {
+      padding: 7px 12px;
+      font-size: 11px;
+      color: #8b949e;
+      border-bottom: 1px solid #21262d;
+      cursor: default;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s;
+    }
+
+    .empresa-item:hover { background: #161b22; }
+
+    .empresa-item.ativa {
+      background: #1f3a5f;
+      color: #58a6ff;
+    }
+
+    .empresa-item.ativa .empresa-dot { background: #58a6ff; }
+    .empresa-item.concluida { color: #3fb950; }
+    .empresa-item.concluida .empresa-dot { background: #3fb950; }
+
+    .empresa-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: #30363d;
+      flex-shrink: 0;
+    }
+
+    .empresa-nome {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Painel de logs */
+    .painel-logs {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .painel-logs-header {
+      padding: 8px 12px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #8b949e;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      border-bottom: 1px solid #30363d;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .btn-clear {
+      background: none;
+      border: none;
+      color: #484f58;
+      font-size: 10px;
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: color 0.15s;
+    }
+
+    .btn-clear:hover { color: #8b949e; }
+
+    .logs-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 0;
+      font-family: 'Consolas', 'Courier New', monospace;
+    }
+
+    .logs-container::-webkit-scrollbar { width: 4px; }
+    .logs-container::-webkit-scrollbar-track { background: transparent; }
+    .logs-container::-webkit-scrollbar-thumb { background: #30363d; border-radius: 2px; }
+
+    .log-entry {
+      padding: 2px 12px;
+      font-size: 11px;
+      line-height: 1.6;
+      display: flex;
+      gap: 10px;
+      border-left: 2px solid transparent;
+    }
+
+    .log-entry:hover { background: #161b22; }
+
+    .log-time {
+      color: #484f58;
+      flex-shrink: 0;
+      font-size: 10px;
+      padding-top: 1px;
+    }
+
+    .log-msg { color: #e6edf3; word-break: break-word; }
+
+    .log-entry.info  { border-left-color: #30363d; }
+    .log-entry.info .log-msg { color: #e6edf3; }
+    .log-entry.success { border-left-color: #3fb950; }
+    .log-entry.success .log-msg { color: #3fb950; }
+    .log-entry.warning { border-left-color: #f6c90e; }
+    .log-entry.warning .log-msg { color: #f6c90e; }
+    .log-entry.error { border-left-color: #f85149; }
+    .log-entry.error .log-msg { color: #f85149; }
+
+    /* Progresso empresa atual */
+    .empresa-atual {
+      padding: 6px 12px;
+      font-size: 10px;
+      color: #58a6ff;
+      border-top: 1px solid #30363d;
+      background: #0d1520;
+      flex-shrink: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="dot"></div>
+  <h1>SEFAZ-AM Automação</h1>
+  <span id="contador">0 instâncias ativas</span>
+</header>
+
+<div id="no-instancias">
+  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+    <rect x="2" y="3" width="20" height="14" rx="2"/>
+    <path d="M8 21h8M12 17v4"/>
+  </svg>
+  <p>Nenhuma instância ativa. Inicie o bot para começar.</p>
+</div>
+
+<div id="grid" style="display:none"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
+  const grid = document.getElementById('grid');
+  const noInstancias = document.getElementById('no-instancias');
+  const contador = document.getElementById('contador');
+
+  // Mapa: instanciaId -> { card, logsEl, empresasEl }
+  const cards = new Map();
+  // Mapa: instanciaId -> empresaIndex -> concluida?
+  const empresasStatus = new Map();
+
+  function formatTime(iso) {
+    const d = new Date(iso);
+    return d.toTimeString().slice(0, 8);
+  }
+
+  function statusClass(status) {
+    const map = {
+      iniciando: 'status-iniciando',
+      aguardando: 'status-aguardando',
+      coletando: 'status-coletando',
+      processando: 'status-processando',
+      concluido: 'status-concluido',
+      erro: 'status-erro',
+    };
+    return map[status] || 'status-iniciando';
+  }
+
+  function statusLabel(status) {
+    const map = {
+      iniciando: 'Iniciando',
+      aguardando: 'Aguard. login',
+      coletando: 'Coletando',
+      processando: 'Processando',
+      concluido: 'Concluído',
+      erro: 'Erro',
+    };
+    return map[status] || status;
+  }
+
+  function criarCard(inst) {
+    const card = document.createElement('div');
+    card.className = 'instancia-card';
+    card.id = `card-${inst.id}`;
+
+    card.innerHTML = `
+      <div class="instancia-header">
+        <span class="instancia-id">#${inst.id}</span>
+        <span class="instancia-nome">${inst.nome}</span>
+        <span class="status-badge ${statusClass(inst.status)}" id="badge-${inst.id}">${statusLabel(inst.status)}</span>
+      </div>
+      <div class="instancia-body">
+        <div class="painel-empresas">
+          <div class="painel-empresas-header">Empresas <span id="emp-count-${inst.id}">0</span></div>
+          <div class="empresas-list" id="empresas-${inst.id}"></div>
+        </div>
+        <div class="painel-logs">
+          <div class="painel-logs-header">
+            <span>Log</span>
+            <button class="btn-clear" onclick="clearLogs('${inst.id}')">limpar</button>
+          </div>
+          <div class="logs-container" id="logs-${inst.id}"></div>
+          <div class="empresa-atual" id="atual-${inst.id}" style="display:none"></div>
+        </div>
+      </div>
+    `;
+
+    return card;
+  }
+
+  function renderEmpresas(instId, empresas, empresaAtual) {
+    const el = document.getElementById(`empresas-${instId}`);
+    const countEl = document.getElementById(`emp-count-${instId}`);
+    if (!el) return;
+
+    countEl.textContent = empresas.length;
+    el.innerHTML = '';
+
+    const st = empresasStatus.get(instId) || new Map();
+
+    empresas.forEach((emp, i) => {
+      const item = document.createElement('div');
+      item.className = 'empresa-item';
+      item.id = `emp-${instId}-${i}`;
+
+      const ativa = empresaAtual && empresaAtual.index === i;
+      const concluida = st.get(i);
+
+      if (ativa) item.classList.add('ativa');
+      else if (concluida) item.classList.add('concluida');
+
+      item.innerHTML = `<div class="empresa-dot"></div><span class="empresa-nome" title="${emp.nome}">${emp.nome}</span>`;
+      el.appendChild(item);
+    });
+  }
+
+  function appendLog(instId, log) {
+    const el = document.getElementById(`logs-${instId}`);
+    if (!el) return;
+
+    const entry = document.createElement('div');
+    entry.className = `log-entry ${log.level || 'info'}`;
+    entry.innerHTML = `<span class="log-time">${formatTime(log.timestamp)}</span><span class="log-msg">${escapeHtml(log.message)}</span>`;
+    el.appendChild(entry);
+
+    // Auto-scroll
+    el.scrollTop = el.scrollHeight;
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function clearLogs(instId) {
+    const el = document.getElementById(`logs-${instId}`);
+    if (el) el.innerHTML = '';
+  }
+
+  function atualizarContador(instancias) {
+    const ativas = instancias.filter(i => i.status !== 'concluido').length;
+    contador.textContent = `${instancias.length} instância${instancias.length !== 1 ? 's' : ''} | ${ativas} ativa${ativas !== 1 ? 's' : ''}`;
+  }
+
+  socket.on('instancias-update', (instancias) => {
+    // Remove cards de instâncias que não existem mais
+    for (const [id] of cards) {
+      if (!instancias.find(i => i.id === id)) {
+        const card = document.getElementById(`card-${id}`);
+        if (card) card.remove();
+        cards.delete(id);
+        empresasStatus.delete(id);
+      }
+    }
+
+    // Cria ou atualiza cards
+    instancias.forEach(inst => {
+      if (!cards.has(inst.id)) {
+        // Cria novo card
+        const card = criarCard(inst);
+        grid.appendChild(card);
+        cards.set(inst.id, true);
+        empresasStatus.set(inst.id, new Map());
+
+        // Renderiza logs existentes
+        inst.logs.forEach(log => appendLog(inst.id, log));
+      }
+
+      // Atualiza badge de status
+      const badge = document.getElementById(`badge-${inst.id}`);
+      if (badge) {
+        badge.className = `status-badge ${statusClass(inst.status)}`;
+        badge.textContent = statusLabel(inst.status);
+      }
+
+      // Atualiza empresas
+      if (inst.empresas && inst.empresas.length > 0) {
+        renderEmpresas(inst.id, inst.empresas, inst.empresaAtual);
+      }
+
+      // Empresa atual
+      const atualEl = document.getElementById(`atual-${inst.id}`);
+      if (atualEl && inst.empresaAtual) {
+        atualEl.style.display = 'block';
+        atualEl.textContent = `► ${inst.empresaAtual.nome} (${inst.empresaAtual.index + 1}/${inst.empresas.length})`;
+      }
+    });
+
+    // Mostra/oculta estados
+    if (instancias.length === 0) {
+      noInstancias.style.display = 'flex';
+      grid.style.display = 'none';
+    } else {
+      noInstancias.style.display = 'none';
+      grid.style.display = 'grid';
+    }
+
+    atualizarContador(instancias);
+  });
+
+  socket.on('log-update', ({ instanciaId, log }) => {
+    appendLog(instanciaId, log);
+  });
+</script>
+</body>
+</html>

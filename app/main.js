@@ -63,6 +63,7 @@ function createMainWindow() {
     autoHideMenuBar: true,
     frame: false,
     titleBarStyle: 'hidden',
+    icon: path.join(__dirname, '..', 'assets', 'icon.ico'),
   });
 
   // Abre tela de login primeiro

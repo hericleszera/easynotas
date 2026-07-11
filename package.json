@@ -36,6 +36,8 @@
     "files": [
       "app/**",
       "assets/**",
+      "logo.png",
+      "ex.png",
       "node_modules/**",
       "!node_modules/electron/**",
       "!node_modules/electron-builder/**",

@@ -4,9 +4,10 @@
   "description": "EasyNotas - Automação SEFAZ-AM DTE",
   "main": "app/main.js",
   "scripts": {
-    "start": "electron .",
-    "server": "node server.js",
-    "build": "electron-builder --win --x64"
+    "start": "node server.js",
+    "electron": "electron .",
+    "electron-build": "electron-builder --win --x64",
+    "server": "node server.js"
   },
   "build": {
     "appId": "com.easynotas.app",
